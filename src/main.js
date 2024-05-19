@@ -35,13 +35,14 @@ app.post('/setipv6proxy', async (req, res) => {
 	availableSocksPort.splice(arraySockPortIndex, 1)
 
 	// console.log(currentPort)
+	shell.exec(`ip -6 addr add ${await ipv6Address}/64 dev enp0s3`)
+
 	shell
 		.ShellString(`proxy -p${currentHttpPort} -a -n -6 -i0.0.0.0 -e${await ipv6Address}\n`)
 		.toEnd('/usr/local/3proxy/conf/3proxy.cfg') //Http
 	shell
 		.ShellString(`socks -p${currentSockPort} -a -n -6 -i0.0.0.0 -e${await ipv6Address}\n`)
 		.toEnd('/usr/local/3proxy/conf/3proxy.cfg') //Socks
-	shell.exec(`ip -6 addr add ${await ipv6Address}/64 dev enp0s3`)
 
 	shell.exec(`ufw allow ${currentHttpPort}`)
 	shell.exec(`ufw allow ${currentSockPort}`)
@@ -61,10 +62,11 @@ app.post('/removeipv6proxy', async (req, res) => {
 	const socksPort = req.body['SocksPort']
 	const ipv6Address = req.body['Ipv6Address']
 
+	shell.exec(`ip -6 addr del ${await ipv6Address}/64 dev enp0s3`)
+
 	shell.sed('-i', `proxy -p${httpPort} -a -n -6 -i0.0.0.0 -e${await ipv6Address}`, '', '/usr/local/3proxy/conf/3proxy.cfg')
 	shell.sed('-i', `socks -p${socksPort} -a -n -6 -i0.0.0.0 -e${await ipv6Address}`, '', '/usr/local/3proxy/conf/3proxy.cfg')
 
-	shell.exec(`ip -6 addr del ${await ipv6Address}/64 dev enp0s3`)
 	res.send('Ipv6 Address Remove')
 })
 
