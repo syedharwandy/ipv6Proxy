@@ -13,12 +13,18 @@ app.get('/', (req, res) => {
 	res.json({ Ip: '192.168.0.1', Port: '1223', Username: 'syedafs', Password: '123213213' })
 })
 
-app.get('/restartProxy', (req, res) => {
+app.get('/startProxy', (req, res) => {
+	shell
+		.ShellString(
+			'nscache 65536\nnserver 8.8.8.8\nnserver 8.8.4.4\n\nconfig /conf/3proxy.cfg\nmonitor /conf/3proxy.cfg\n\ncounter /count/3proxy.3cf\nusers $/conf/passwd\n\ninclude /conf/counters\ninclude /conf/bandlimiters\n\naut strong\nallow *\nflush\n'
+		)
+		.to('/usr/local/3proxy/conf/3proxy.cfg') //New Cfg File
+
+	chmod(700, '/usr/local/3proxy/conf/3proxy.cfg')
 	shell.exec(`systemctl stop 3proxy.service`)
 	shell.exec(`systemctl start 3proxy.service`)
 	res.send('Proxy Restart')
 })
-
 //Set Ipv6 Proxy
 app.post('/setipv6proxy', async (req, res) => {
 	const ipv6Address = await req.body['Ipv6 Address']
@@ -66,6 +72,9 @@ app.post('/removeipv6proxy', async (req, res) => {
 
 	shell.sed('-i', `proxy -p${httpPort} -a -n -6 -i0.0.0.0 -e${await ipv6Address}`, '', '/usr/local/3proxy/conf/3proxy.cfg')
 	shell.sed('-i', `socks -p${socksPort} -a -n -6 -i0.0.0.0 -e${await ipv6Address}`, '', '/usr/local/3proxy/conf/3proxy.cfg')
+
+	availableHttpPort.push(httpPort)
+	availableSocksPort.push(socksPort)
 
 	res.send('Ipv6 Address Remove')
 })
