@@ -43,6 +43,9 @@ app.post('/setipv6proxy', async (req, res) => {
 		.toEnd('/usr/local/3proxy/conf/3proxy.cfg') //Socks
 	shell.exec(`ip -6 addr add ${await ipv6Address}/64 dev enp0s3`)
 
+	shell.exec(`ufw allow ${currentHttpPort}`)
+	shell.exec(`ufw allow ${currentSockPort}`)
+
 	res.json({
 		LocalIp: localIp,
 		HttpPort: currentHttpPort,
