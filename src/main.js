@@ -2,8 +2,8 @@ import express from 'express'
 import shell from 'shelljs'
 const app = express()
 
-const availableHttpPort = ['1000', '1001', '1002', '1003', '1004', '1005', '1006', '1007', '1008', '1009', '1010']
-const availableSocksPort = ['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010']
+const availableHttpPort = ['10000', '10001', '10002', '10003', '10004', '10005', '10006', '10007', '10008', '10009', '10010']
+const availableSocksPort = ['20000', '20001', '20002', '20003', '20004', '20005', '20006', '20007', '20008', '20009', '20010']
 const username = 'syedharwandy'
 const password = 'Asyraf1994'
 
