@@ -1,19 +1,28 @@
 import express from 'express'
 import shell from 'shelljs'
-const app = express()
+import Queue from './dataQueue.js'
 
-const availableHttpPort = ['10000', '10001', '10002', '10003', '10004', '10005', '10006', '10007', '10008', '10009', '10010']
-const availableSocksPort = ['20000', '20001', '20002', '20003', '20004', '20005', '20006', '20007', '20008', '20009', '20010']
+const httpQue = new Queue()
+const app = express()
+const serverPort = 4000
+
+let availableHttpPort = [
+	10000, 10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009, 10010, 10011, 10012, 10013, 10014, 10015, 10016, 10017,
+	10018, 10019, 10020, 10021, 10022, 10023, 10024, 10025, 10026, 10027, 10028, 10029, 10030, 10031, 10032, 10033, 10034, 10035,
+	10036, 10037, 10038, 10039, 10040, 10041, 10042, 10043, 10044, 10045, 10046, 10047, 10048, 10049, 10050,
+]
+
+for (let x = 0; x < availableHttpPort.length; x++) {
+	httpQue.enqueue(availableHttpPort[x])
+}
+
 const username = 'syedharwandy'
 const password = 'Asyraf1994'
 
 app.use(express.json())
 
-app.get('/', (req, res) => {
-	res.json({ Ip: '192.168.0.1', Port: '1223', Username: 'syedafs', Password: '123213213' })
-})
-
 app.get('/startProxy', (req, res) => {
+	shell.echo(`Start IPV6 PROXY Using Port ${serverPort}`)
 	shell
 		.ShellString(
 			'nscache 65536\nnserver 8.8.8.8\nnserver 8.8.4.4\n\nconfig /conf/3proxy.cfg\nmonitor /conf/3proxy.cfg\n\ncounter /count/3proxy.3cf\nusers $/conf/passwd\n\ninclude /conf/counters\ninclude /conf/bandlimiters\n\nauth strong\nallow *\n'
@@ -24,9 +33,6 @@ app.get('/startProxy', (req, res) => {
 	shell.exec(`systemctl stop 3proxy.service`)
 	shell.exec(`systemctl start 3proxy.service`)
 
-	availableHttpPort = ['10000', '10001', '10002', '10003', '10004', '10005', '10006', '10007', '10008', '10009', '10010']
-	availableSocksPort = ['20000', '20001', '20002', '20003', '20004', '20005', '20006', '20007', '20008', '20009', '20010']
-
 	res.send('Proxy Restart')
 })
 //Set Ipv6 Proxy
@@ -35,27 +41,24 @@ app.post('/setipv6proxy', (req, res) => {
 	const localIp = req.body['Local IP']
 
 	//Get Random Available Http Port
-	const arrayHttpPortIndex = Math.floor(Math.random() * (availableHttpPort.length - 1))
-	const currentHttpPort = availableHttpPort[arrayHttpPortIndex]
-	availableHttpPort.splice(arrayHttpPortIndex, 1)
+	const httpPort = httpQue.dequeue()
+	const socksPort = httpPort + 10000
+	httpQue.enqueue(httpPort)
+	shell.echo(`Setup New Ipv6 Using Port [H:${httpPort}|S:${socksPort}] For [${ipv6Address}]`)
 
-	//Get Random Available Socks Port
-	const arraySockPortIndex = Math.floor(Math.random() * (availableSocksPort.length - 1))
-	const currentSockPort = availableSocksPort[arraySockPortIndex]
-	availableSocksPort.splice(arraySockPortIndex, 1)
+	//Remove Used Port
+	const newRegexHttp = new RegExp(`.*-p${httpPort}.*`, 'd') //Working
+	const newRegexSocks = new RegExp(`.*-p${socksPort}.*`, 'd') //Working
+	shell.sed('-i', newRegexHttp, '', '/usr/local/3proxy/conf/3proxy.cfg')
+	shell.sed('-i', newRegexSocks, '', '/usr/local/3proxy/conf/3proxy.cfg')
 
 	// console.log(currentPort)
 	shell.exec(`ip -6 addr add ${ipv6Address}/64 dev enp0s3`)
+	shell.ShellString(`proxy -p${httpPort} -a -n -6 -i0.0.0.0 -e${ipv6Address}\n`).toEnd('/usr/local/3proxy/conf/3proxy.cfg') //Http
+	shell.ShellString(`socks -p${socksPort} -a -n -6 -i0.0.0.0 -e${ipv6Address}\n`).toEnd('/usr/local/3proxy/conf/3proxy.cfg') //Socks
 
-	shell
-		.ShellString(`proxy -p${currentHttpPort} -a -n -6 -i0.0.0.0 -e${ipv6Address}\n`)
-		.toEnd('/usr/local/3proxy/conf/3proxy.cfg') //Http
-	shell
-		.ShellString(`socks -p${currentSockPort} -a -n -6 -i0.0.0.0 -e${ipv6Address}\n`)
-		.toEnd('/usr/local/3proxy/conf/3proxy.cfg') //Socks
-
-	shell.exec(`ufw allow ${currentHttpPort}`)
-	shell.exec(`ufw allow ${currentSockPort}`)
+	shell.exec(`ufw allow ${httpPort}`)
+	shell.exec(`ufw allow ${socksPort}`)
 
 	res.json({
 		LocalIp: localIp,
@@ -66,26 +69,5 @@ app.post('/setipv6proxy', (req, res) => {
 		Password: password,
 	})
 })
-//Remove Ipv6 Proxy
-app.post('/removeipv6proxy', (req, res) => {
-	const httpPort = req.body['HttpPort']
-	const socksPort = req.body['SocksPort']
-	const ipv6Address = req.body['Ipv6Address']
 
-	shell.exec(`ip -6 addr del ${ipv6Address}/64 dev enp0s3`)
-
-	shell.sed('-i', `auth strong#p${httpPort}${socksPort}`, '', '/usr/local/3proxy/conf/3proxy.cfg')
-	shell.sed('-i', `proxy -p${httpPort} -a -n -6 -i0.0.0.0 -e${ipv6Address}`, '', '/usr/local/3proxy/conf/3proxy.cfg')
-	shell.sed('-i', `socks -p${socksPort} -a -n -6 -i0.0.0.0 -e${ipv6Address}`, '', '/usr/local/3proxy/conf/3proxy.cfg')
-	shell.sed('-i', `allow users#p${httpPort}${socksPort}`, '', '/usr/local/3proxy/conf/3proxy.cfg')
-	shell.sed('-i', `auth strong #p${httpPort}${socksPort}`, '', '/usr/local/3proxy/conf/3proxy.cfg')
-
-	availableHttpPort.push(httpPort)
-	availableSocksPort.push(socksPort)
-
-	res.send('Ipv6 Address Remove')
-})
-
-app.listen(4000, () => {
-	console.log('Listen To 4000')
-})
+app.listen(serverPort)
