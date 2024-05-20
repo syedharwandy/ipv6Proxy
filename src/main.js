@@ -16,6 +16,19 @@ for (let x = 0; x < availableHttpPort.length; x++) {
 	httpQue.enqueue(availableHttpPort[x])
 }
 
+function autoRemoveConnection(httpPort, socksPort, ipv6Address) {
+	setTimeout(() => {
+		shell.echo(`Remove Unused Port [H:${httpPort}|S:${socksPort}] For [${ipv6Address}]`)
+		//Remove Port From File
+		const newRegexHttp = new RegExp(`.*-p${httpPort}.*`, 'd') //Working
+		const newRegexSocks = new RegExp(`.*-p${socksPort}.*`, 'd') //Working
+		shell.sed('-i', newRegexHttp, '', '/usr/local/3proxy/conf/3proxy.cfg')
+		shell.sed('-i', newRegexSocks, '', '/usr/local/3proxy/conf/3proxy.cfg')
+
+		shell.exec(`ip -6 addr del ${ipv6Address}/64 dev enp0s3`)
+	}, 10 * 60000)
+}
+
 const username = 'syedharwandy'
 const password = 'Asyraf1994'
 
@@ -60,14 +73,15 @@ app.post('/setipv6proxy', (req, res) => {
 	shell.exec(`ufw allow ${httpPort}`)
 	shell.exec(`ufw allow ${socksPort}`)
 
+	autoRemoveConnection(httpPort, socksPort, ipv6Address)
+
 	res.json({
 		LocalIp: localIp,
-		HttpPort: currentHttpPort,
-		SocksPort: currentSockPort,
+		HttpPort: httpPort,
+		SocksPort: socksPort,
 		Ipv6Address: ipv6Address,
 		Username: username,
 		Password: password,
 	})
 })
-
 app.listen(serverPort)
