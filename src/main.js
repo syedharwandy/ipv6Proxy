@@ -11,13 +11,13 @@ const timeoutId = setTimeout(() => controller.abort(), 60000)
 
 const mainIpv6 = await fetch('https://v6.ipv6-test.com/api/myip.php', { signal: controller.signal }).then(async (getIpv6) => {
 	clearTimeout(timeoutId)
-	const currentNewIP = (await getIpv6.text()).split(':')
-	const mainIpv6 = `${await currentNewIP[0]}:${await currentNewIP[1]}:${await currentNewIP[2]}:${await currentNewIP[3]}`
-	if ((await mainIpv6.includes(':')) !== true) {
-		shell.echo(`Unable Get Ipv6 Current IP Get : ${await getIpv6.text()}`)
+	const currentNewIP = getIpv6.text().split(':')
+	const mainIpv6 = `${currentNewIP[0]}:${currentNewIP[1]}:${currentNewIP[2]}:${currentNewIP[3]}`
+	if (mainIpv6.includes(':') !== true) {
+		shell.echo(`Unable Get Ipv6 Current IP Get : ${getIpv6.text()}`)
 		process.exit(1)
 	}
-	return await mainIpv6
+	return mainIpv6
 })
 
 console.log(mainIpv6)
