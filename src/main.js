@@ -9,16 +9,18 @@ const serverPort = 4000
 const controller = new AbortController()
 const timeoutId = setTimeout(() => controller.abort(), 60000)
 
-const getIpv6 = await fetch('https://v6.ipv6-test.com/api/myip.php', { signal: controller.signal }).then((response) => {
+const mainIpv6 = await fetch('https://v6.ipv6-test.com/api/myip.php', { signal: controller.signal }).then(async (getIpv6) => {
 	clearTimeout(timeoutId)
-	return response
+	const currentNewIP = (await getIpv6.text()).split(':')
+	const mainIpv6 = `${await currentNewIP[0]}:${await currentNewIP[1]}:${await currentNewIP[2]}:${await currentNewIP[3]}`
+	if ((await mainIpv6.includes(':')) !== true) {
+		shell.echo(`Unable Get Ipv6 Current IP Get : ${await getIpv6.text()}`)
+		process.exit(1)
+	}
+	return await mainIpv6
 })
-const currentNewIP = (await getIpv6.text()).split(':')
-const mainIpv6 = `${await currentNewIP[0]}:${await currentNewIP[1]}:${await currentNewIP[2]}:${await currentNewIP[3]}`
-if ((await mainIpv6.includes(':')) !== true) {
-	shell.echo(`Unable Get Ipv6 Current IP Get : ${await getIpv6.text()}`)
-	process.exit(1)
-}
+
+console.log(mainIpv6)
 
 let availableHttpPort = [
 	10000, 10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009, 10010, 10011, 10012, 10013, 10014, 10015, 10016, 10017,
