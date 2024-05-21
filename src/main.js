@@ -6,6 +6,11 @@ const httpQue = new Queue()
 const app = express()
 const serverPort = 4000
 
+const getIpv6 = await fetch('http://icanhazip.com/')
+const currentNewIP = (await getIpv6.text()).split(':')
+const mainIpv6 = `${await currentNewIP[0]}:${await currentNewIP[1]}:${await currentNewIP[2]}:${await currentNewIP[3]}`
+if ((await mainIpv6.includes(':')) !== true) throw new Error('Cannot Get Ipv6 Address')
+
 let availableHttpPort = [
 	10000, 10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009, 10010, 10011, 10012, 10013, 10014, 10015, 10016, 10017,
 	10018, 10019, 10020, 10021, 10022, 10023, 10024, 10025, 10026, 10027, 10028, 10029, 10030, 10031, 10032, 10033, 10034, 10035,
@@ -42,15 +47,18 @@ app.get('/startProxy', (req, res) => {
 		)
 		.to('/usr/local/3proxy/conf/3proxy.cfg') //New Cfg File
 
+	setTimeout((r) => r, 20000)
 	shell.chmod(700, '/usr/local/3proxy/conf/3proxy.cfg')
 	shell.exec(`systemctl stop 3proxy.service`)
+	setTimeout((r) => r, 20000)
 	shell.exec(`systemctl start 3proxy.service`)
 
 	res.send('Proxy Restart')
 })
 //Set Ipv6 Proxy
 app.post('/setipv6proxy', (req, res) => {
-	const ipv6Address = req.body['Ipv6 Address']
+	let ipv6Address = req.body['Ipv6 Address']
+	ipv6Address = ipv6Address.replace('[MainIpv6]', mainIpv6)
 	const localIp = req.body['Local IP']
 
 	//Get Random Available Http Port
