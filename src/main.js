@@ -40,7 +40,7 @@ function autoRemoveConnection(httpPort, socksPort, ipv6Address) {
 }
 //Create HttpPort
 for (let x = 1; x <= totalPortNeedToBuffer; x++) {
-	httpQue.enqueue(availableHttpPort[10000 + x])
+	httpQue.enqueue(10000 + x)
 }
 //Used Express JSON
 app.use(express.json())
