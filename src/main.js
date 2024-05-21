@@ -49,6 +49,8 @@ app.get(
 	'/startProxy',
 	asyncHandler(async (req, res) => {
 		shell.echo(`Start IPV6 PROXY Using Port ${serverPort}`)
+
+		await runShellexec('ip -6 addr flush dev enp0s3')
 		shell
 			.ShellString(
 				'nscache 65536\nnserver 8.8.8.8\nnserver 8.8.4.4\n\nconfig /conf/3proxy.cfg\nmonitor /conf/3proxy.cfg\n\ncounter /count/3proxy.3cf\nusers $/conf/passwd\n\ninclude /conf/counters\ninclude /conf/bandlimiters\n\nauth strong\nallow *\n'
@@ -65,7 +67,7 @@ app.get(
 	})
 )
 //Set Ipv6 Proxy
-app.get(
+app.post(
 	'/setipv6proxy',
 	asyncHandler(async (req, res) => {
 		await lock.acquire('createIPv6', async () => {
