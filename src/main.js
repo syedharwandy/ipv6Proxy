@@ -2,7 +2,7 @@ import express from 'express'
 import shell from 'shelljs'
 import Queue from './dataQueue.js'
 import asyncHandler from 'express-async-handler'
-const AsyncLock = require('async-lock')
+import AsyncLock from 'async-lock'
 
 const lock = new AsyncLock()
 const httpQue = new Queue()
