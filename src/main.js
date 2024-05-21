@@ -6,7 +6,13 @@ const httpQue = new Queue()
 const app = express()
 const serverPort = 4000
 
-const getIpv6 = await fetch('https://v6.ipv6-test.com/api/myip.php')
+const controller = new AbortController()
+const timeoutId = setTimeout(() => controller.abort(), 60000)
+
+const getIpv6 = await fetch('https://v6.ipv6-test.com/api/myip.php', { signal: controller.signal }).then((response) => {
+	clearTimeout(timeoutId)
+	return response
+})
 const currentNewIP = (await getIpv6.text()).split(':')
 const mainIpv6 = `${await currentNewIP[0]}:${await currentNewIP[1]}:${await currentNewIP[2]}:${await currentNewIP[3]}`
 if ((await mainIpv6.includes(':')) !== true) {
