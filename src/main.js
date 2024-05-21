@@ -2,11 +2,11 @@ import express from 'express'
 import shell from 'shelljs'
 import Queue from './dataQueue.js'
 import asyncHandler from 'express-async-handler'
-import AsyncLock from 'async-lock'
+import { Mutex } from 'async-mutex'
 
-const lock = new AsyncLock()
 const httpQue = new Queue()
 const app = express()
+const mutex = new Mutex()
 const serverPort = 4000
 const totalPortNeedToBuffer = 100
 const username = 'syedharwandy'
@@ -26,7 +26,7 @@ async function runShellexec(command) {
 //Function To Remove Ipv6
 function autoRemoveConnection(httpPort, socksPort, ipv6Address) {
 	setTimeout(async () => {
-		await lock.acquire('removeUsedIPV6', async () => {
+		await mutex.runExclusive(async () => {
 			shell.echo(`Remove Unused Port [H:${httpPort}|S:${socksPort}] For [${ipv6Address}]`)
 			//Remove Port From File
 			const newRegexHttp = new RegExp(`.*-p${httpPort}.*`, 'd') //Working
@@ -57,10 +57,8 @@ app.get(
 			)
 			.to('/usr/local/3proxy/conf/3proxy.cfg') //New Cfg File
 
-		await new Promise((r) => setTimeout(r, 20000))
 		shell.chmod(700, '/usr/local/3proxy/conf/3proxy.cfg')
 		await runShellexec(`systemctl stop 3proxy.service`)
-		await new Promise((r) => setTimeout(r, 20000))
 		await runShellexec(`systemctl start 3proxy.service`)
 
 		res.send('Proxy Restart')
@@ -70,7 +68,7 @@ app.get(
 app.post(
 	'/setipv6proxy',
 	asyncHandler(async (req, res) => {
-		await lock.acquire('createIPv6', async () => {
+		await mutex.runExclusive(async () => {
 			let ipv6Address = req.body['Ipv6 Address']
 			const localIp = req.body['Local IP']
 
