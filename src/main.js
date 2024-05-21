@@ -5,22 +5,7 @@ import Queue from './dataQueue.js'
 const httpQue = new Queue()
 const app = express()
 const serverPort = 4000
-
-const controller = new AbortController()
-const timeoutId = setTimeout(() => controller.abort(), 60000)
-
-const mainIpv6 = await fetch('https://v6.ipv6-test.com/api/myip.php', { signal: controller.signal }).then(async (getIpv6) => {
-	clearTimeout(timeoutId)
-	const currentNewIP = getIpv6.text().split(':')
-	const mainIpv6 = `${currentNewIP[0]}:${currentNewIP[1]}:${currentNewIP[2]}:${currentNewIP[3]}`
-	if (mainIpv6.includes(':') !== true) {
-		shell.echo(`Unable Get Ipv6 Current IP Get : ${getIpv6.text()}`)
-		process.exit(1)
-	}
-	return mainIpv6
-})
-
-console.log(mainIpv6)
+let mainIpv6
 
 let availableHttpPort = [
 	10000, 10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009, 10010, 10011, 10012, 10013, 10014, 10015, 10016, 10017,
@@ -50,7 +35,7 @@ const password = 'Asyraf1994'
 
 app.use(express.json())
 
-app.get('/startProxy', (req, res) => {
+app.get('/startProxy', async (req, res) => {
 	shell.echo(`Start IPV6 PROXY Using Port ${serverPort}`)
 	shell
 		.ShellString(
@@ -63,6 +48,20 @@ app.get('/startProxy', (req, res) => {
 	shell.exec(`systemctl stop 3proxy.service`)
 	setTimeout((r) => r, 20000)
 	shell.exec(`systemctl start 3proxy.service`)
+
+	const controller = new AbortController()
+	const timeoutId = setTimeout(() => controller.abort(), 60000)
+
+	mainIpv6 = await fetch('https://v6.ipv6-test.com/api/myip.php', { signal: controller.signal }).then(async (getIpv6) => {
+		clearTimeout(timeoutId)
+		const currentNewIP = getIpv6.text().split(':')
+		const mainIpv6 = `${currentNewIP[0]}:${currentNewIP[1]}:${currentNewIP[2]}:${currentNewIP[3]}`
+		if (mainIpv6.includes(':') !== true) {
+			shell.echo(`Unable Get Ipv6 Current IP Get : ${getIpv6.text()}`)
+			process.exit(1)
+		}
+		return mainIpv6
+	})
 
 	res.send('Proxy Restart')
 })
