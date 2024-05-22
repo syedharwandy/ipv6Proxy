@@ -12,6 +12,8 @@ const totalPortNeedToBuffer = 100
 const username = 'syedharwandy'
 const password = 'Asyraf1994'
 
+mutex.release()
+
 //shelljs Exec Promises
 async function runShellexec(command) {
 	return await new Promise((resolve, reject) => {
@@ -24,7 +26,7 @@ async function runShellexec(command) {
 	})
 }
 //Function To Remove Ipv6
-function autoRemoveConnection(httpPort, socksPort, ipv6Address) {
+async function autoRemoveConnection(httpPort, socksPort, ipv6Address) {
 	setTimeout(async () => {
 		const release = await mutex.acquire()
 		try {
