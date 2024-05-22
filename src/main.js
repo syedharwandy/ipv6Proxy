@@ -14,7 +14,7 @@ const password = 'Asyraf1994'
 
 //shelljs Exec Promises
 async function runShellexec(command) {
-	return new Promise((resolve, reject) => {
+	return await new Promise((resolve, reject) => {
 		shell.exec(command, { async: true }, (code, stdout, stderr) => {
 			if (!code) {
 				return resolve(stdout)
@@ -26,7 +26,8 @@ async function runShellexec(command) {
 //Function To Remove Ipv6
 function autoRemoveConnection(httpPort, socksPort, ipv6Address) {
 	setTimeout(async () => {
-		await mutex.runExclusive(async () => {
+		const release = await mutex.acquire()
+		try {
 			shell.echo(`Remove Unused Port [H:${httpPort}|S:${socksPort}] For [${ipv6Address}]`)
 			//Remove Port From File
 			const newRegexHttp = new RegExp(`.*-p${httpPort}.*`, 'd') //Working
@@ -35,7 +36,11 @@ function autoRemoveConnection(httpPort, socksPort, ipv6Address) {
 			shell.sed('-i', newRegexSocks, '', '/usr/local/3proxy/conf/3proxy.cfg')
 
 			await runShellexec(`ip -6 addr del ${ipv6Address}/64 dev enp0s3`)
-		})
+
+			httpQue.enqueue(httpPort)
+		} finally {
+			release()
+		}
 	}, 10 * 60000)
 }
 //Create HttpPort
@@ -49,11 +54,9 @@ app.get(
 	'/startProxy',
 	asyncHandler(async (req, res) => {
 		shell.echo(`Start IPV6 PROXY Using Port ${serverPort}`)
-
-		await runShellexec('ip -6 addr flush dev enp0s3')
 		shell
 			.ShellString(
-				'nscache 65536\nnserver 8.8.8.8\nnserver 8.8.4.4\n\nconfig /conf/3proxy.cfg\nmonitor /conf/3proxy.cfg\n\ncounter /count/3proxy.3cf\nusers $/conf/passwd\n\ninclude /conf/counters\ninclude /conf/bandlimiters\n\nauth strong\nallow *\n'
+				'nscache 65536\nnserver 8.8.8.8\nnserver 8.8.4.4\n\nconfig /conf/3proxy.cfg\nmonitor /conf/3proxy.cfg\n\ncounter /count/3proxy.3cf\nusers $/conf/passwd\n\ninclude /conf/counters\ninclude /conf/bandlimiters\n\nauth strong\nallow *\n\nproxy -n\n\n'
 			)
 			.to('/usr/local/3proxy/conf/3proxy.cfg') //New Cfg File
 
@@ -68,14 +71,14 @@ app.get(
 app.post(
 	'/setipv6proxy',
 	asyncHandler(async (req, res) => {
-		await mutex.runExclusive(async () => {
+		const release = await mutex.acquire()
+		try {
 			let ipv6Address = req.body['Ipv6 Address']
 			const localIp = req.body['Local IP']
 
 			//Get Random Available Http Port
 			const httpPort = httpQue.dequeue()
 			const socksPort = httpPort + 10000
-			httpQue.enqueue(httpPort)
 			shell.echo(`Setup New Ipv6 Using Port [H:${httpPort}|S:${socksPort}] For [${ipv6Address}]`)
 
 			//Remove Used Port
@@ -104,7 +107,9 @@ app.post(
 				Username: username,
 				Password: password,
 			})
-		})
+		} finally {
+			release()
+		}
 	})
 )
 
