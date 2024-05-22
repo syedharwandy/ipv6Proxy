@@ -1,9 +1,9 @@
 import express from 'express'
 import shell from 'shelljs'
 import Queue from './dataQueue.js'
-import asyncHandler from 'express-async-handler'
 import { Mutex } from 'async-mutex'
 
+const setTimeoutID = {}
 const httpQue = new Queue()
 const app = express()
 const mutex = new Mutex()
@@ -12,9 +12,13 @@ const totalPortNeedToBuffer = 100
 const username = 'syedharwandy'
 const password = 'Asyraf1994'
 
+//Create HttpPort
+for (let x = 1; x <= totalPortNeedToBuffer; x++) {
+	httpQue.enqueue(10000 + x)
+}
 //Function To Remove Ipv6
 function autoRemoveConnection(httpPort, socksPort, ipv6Address) {
-	setTimeout(() => {
+	const timeOutID = setTimeout(() => {
 		mutex.acquire().then(function (release) {
 			shell.echo(`Remove Unused Port [H:${httpPort}|S:${socksPort}] For [${ipv6Address}]`)
 			//Remove Port From File
@@ -30,10 +34,8 @@ function autoRemoveConnection(httpPort, socksPort, ipv6Address) {
 			release()
 		})
 	}, 10 * 60000)
-}
-//Create HttpPort
-for (let x = 1; x <= totalPortNeedToBuffer; x++) {
-	httpQue.enqueue(10000 + x)
+
+	setTimeoutID[httpPort] = timeOutID
 }
 //Used Express JSON
 app.use(express.json())
@@ -64,6 +66,14 @@ app.post('/setipv6proxy', (req, res) => {
 		//Get Random Available Http Port
 		const httpPort = httpQue.dequeue()
 		const socksPort = httpPort + 10000
+
+		//Check TimeOut Have Been Set Or Not
+		if (setTimeoutID?.[httpPort]) {
+			shell.echo(`Clear All Port Timeout`)
+			clearTimeout(setTimeoutID[httpPort])
+			delete setTimeoutID[httpPort]
+		}
+
 		shell.echo(`Setup New Ipv6 Using Port [H:${httpPort}|S:${socksPort}] For [${ipv6Address}]`)
 
 		//Remove Used Port
