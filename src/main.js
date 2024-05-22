@@ -35,7 +35,7 @@ function autoRemoveConnection(httpPort, socksPort, ipv6Address) {
 		})
 	}, 10 * 60000)
 
-	setTimeoutID[httpPort] = timeOutID
+	setTimeoutID[ipv6Address] = { timeOutID: timeOutID, httpPort: httpPort, socksPort: socksPort }
 }
 //Used Express JSON
 app.use(express.json())
@@ -68,10 +68,19 @@ app.post('/setipv6proxy', (req, res) => {
 		const socksPort = httpPort + 10000
 
 		//Check TimeOut Have Been Set Or Not
-		if (setTimeoutID?.[httpPort]) {
-			shell.echo(`Clear All Port Timeout`)
-			clearTimeout(setTimeoutID[httpPort])
-			delete setTimeoutID[httpPort]
+		if (setTimeoutID?.[ipv6Address]?.['timeOutID']) {
+			shell.echo(`Clear All Port And Ipv6 Timeout`)
+
+			clearTimeout(setTimeoutID[ipv6Address]['timeOutID'])
+			const data = setTimeoutID[ipv6Address]
+
+			const newRegexHttp = new RegExp(`.*-p${data[httpPort]}.*`, 'd') //Working
+			const newRegexSocks = new RegExp(`.*-p${data[socksPort]}.*`, 'd') //Working
+
+			shell.sed('-i', newRegexHttp, '', '/usr/local/3proxy/conf/3proxy.cfg')
+			shell.sed('-i', newRegexSocks, '', '/usr/local/3proxy/conf/3proxy.cfg')
+
+			delete setTimeoutID[ipv6Address]
 		}
 
 		shell.echo(`Setup New Ipv6 Using Port [H:${httpPort}|S:${socksPort}] For [${ipv6Address}]`)
