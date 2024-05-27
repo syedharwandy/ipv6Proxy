@@ -102,10 +102,10 @@ app.post('/setIpv6proxy', (req, res) => {
 		autoRemoveConnection(httpPort, socksPort, ipv6Address)
 
 		res.json({
-			LocalIp: localIp,
+			'Local IP': localIp,
 			HttpPort: httpPort,
 			SocksPort: socksPort,
-			Ipv6Address: ipv6Address,
+			'Ipv6 Address': ipv6Address,
 			Username: username,
 			Password: password,
 		})
@@ -123,6 +123,7 @@ app.post('/removeIpv6proxy', (req, res) => {
 
 			clearTimeout(setTimeoutID[ipv6Address]['timeOutID'])
 			const data = setTimeoutID[ipv6Address]
+			shell.echo(data)
 
 			const newRegexHttp = new RegExp(`.*-p${data[httpPort]}.*`, 'd') //Working
 			const newRegexSocks = new RegExp(`.*-p${data[socksPort]}.*`, 'd') //Working
