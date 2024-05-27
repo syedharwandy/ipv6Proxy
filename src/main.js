@@ -133,7 +133,7 @@ app.post('/removeIpv6proxy', (req, res) => {
 
 			const newRegexHttp = new RegExp(`.*-p${data['httpPort']}.*`, 'd') //Working
 			const newRegexSocks = new RegExp(`.*-p${data['socksPort']}.*`, 'd') //Working
-			const newRegexRemoveEmpty = new RegExp(`^$`, 'd') //Not Sure
+			const newRegexRemoveEmpty = new RegExp(`.*^$.*`, 'd') //Not Sure
 
 			shell.sed('-i', newRegexHttp, '', '/usr/local/3proxy/conf/3proxy.cfg')
 			shell.sed('-i', newRegexSocks, '', '/usr/local/3proxy/conf/3proxy.cfg')
@@ -145,9 +145,11 @@ app.post('/removeIpv6proxy', (req, res) => {
 			httpQue.enqueue(data['httpPort'])
 			delete setTimeoutID[ipv6Address]
 
-			shell.echo(`Remove Used Ipv6 [${ipv6Address}]`)
+			shell.echo(`Remove Used Ipv6 [${ipv6Address}] $ Total Que Port : ${httpQue.length()}`)
+			res.send('Ipv6 Proxy Remove')
 		} else {
 			shell.echo(`Cannot Found Used Ipv6 [${ipv6Address}] Inside TimeOut`)
+			res.send('[Fail] Try To Remove Ipv6 Proxy Fail')
 		}
 
 		release()
