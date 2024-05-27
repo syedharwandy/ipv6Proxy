@@ -74,11 +74,18 @@ app.post('/setIpv6proxy', (req, res) => {
 			clearTimeout(setTimeoutID[ipv6Address]['timeOutID'])
 			const data = setTimeoutID[ipv6Address]
 
-			const newRegexHttp = new RegExp(`.*-p${data[httpPort]}.*`, 'd') //Working
-			const newRegexSocks = new RegExp(`.*-p${data[socksPort]}.*`, 'd') //Working
+			const newRegexHttp = new RegExp(`.*-p${data['httpPort']}.*`, 'd') //Working
+			const newRegexSocks = new RegExp(`.*-p${data['socksPort']}.*`, 'd') //Working
 
 			shell.sed('-i', newRegexHttp, '', '/usr/local/3proxy/conf/3proxy.cfg')
 			shell.sed('-i', newRegexSocks, '', '/usr/local/3proxy/conf/3proxy.cfg')
+
+			if (data['httpPort'] !== httpPort) {
+				httpQue.enqueue(data['httpPort'])
+
+				shell.exec(`ufw deny ${data['httpPort']}`) // Disallow Port Used Http
+				shell.exec(`ufw deny ${data['socksPort']}`) // Disallow Port Used Sock
+			}
 
 			delete setTimeoutID[ipv6Address]
 		}
@@ -123,19 +130,19 @@ app.post('/removeIpv6proxy', (req, res) => {
 
 			clearTimeout(setTimeoutID[ipv6Address]['timeOutID'])
 			const data = setTimeoutID[ipv6Address]
-			shell.echo(data)
 
-			const newRegexHttp = new RegExp(`.*-p${data[httpPort]}.*`, 'd') //Working
-			const newRegexSocks = new RegExp(`.*-p${data[socksPort]}.*`, 'd') //Working
+			const newRegexHttp = new RegExp(`.*-p${data['httpPort']}.*`, 'd') //Working
+			const newRegexSocks = new RegExp(`.*-p${data['socksPort']}.*`, 'd') //Working
 			const newRegexRemoveEmpty = new RegExp(`^$`, 'd') //Not Sure
 
 			shell.sed('-i', newRegexHttp, '', '/usr/local/3proxy/conf/3proxy.cfg')
 			shell.sed('-i', newRegexSocks, '', '/usr/local/3proxy/conf/3proxy.cfg')
 			shell.sed('-i', newRegexRemoveEmpty, '', '/usr/local/3proxy/conf/3proxy.cfg') // Remove Empty Line
 
-			shell.exec(`ufw deny ${data[httpPort]}`) // Disallow Port Used Http
-			shell.exec(`ufw deny ${data[socksPort]}`) // Disallow Port Used Sock
+			shell.exec(`ufw deny ${data['httpPort']}`) // Disallow Port Used Http
+			shell.exec(`ufw deny ${data['socksPort']}`) // Disallow Port Used Sock
 
+			httpQue.enqueue(data['httpPort'])
 			delete setTimeoutID[ipv6Address]
 
 			shell.echo(`Remove Used Ipv6 [${ipv6Address}]`)
