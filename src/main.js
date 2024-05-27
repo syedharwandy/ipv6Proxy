@@ -58,7 +58,7 @@ app.get('/startProxy', (req, res) => {
 	})
 })
 //Set Ipv6 Proxy
-app.post('/setipv6proxy', (req, res) => {
+app.post('/setIpv6proxy', (req, res) => {
 	mutex.acquire().then(function (release) {
 		let ipv6Address = req.body['Ipv6 Address']
 		const localIp = req.body['Local IP']
