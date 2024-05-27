@@ -113,9 +113,9 @@ app.post('/setipv6proxy', (req, res) => {
 	})
 })
 //Remove Unused IPV6
-app.post('/removeipv6proxy', (req, res) => {
+app.post('/removeIpv6proxy', (req, res) => {
 	mutex.acquire().then(function (release) {
-		let ipv6Address = req.body['Ipv6 Address']
+		const ipv6Address = req.body['Ipv6 Address']
 
 		//Check TimeOut Have Been Set Or Not
 		if (setTimeoutID?.[ipv6Address]?.['timeOutID']) {
@@ -136,9 +136,11 @@ app.post('/removeipv6proxy', (req, res) => {
 			shell.exec(`ufw deny ${data[socksPort]}`) // Disallow Port Used Sock
 
 			delete setTimeoutID[ipv6Address]
-		}
 
-		shell.echo(`Setup New Ipv6 Using Port [H:${httpPort}|S:${socksPort}] For [${ipv6Address}]`)
+			shell.echo(`Remove Used Ipv6 [${ipv6Address}]`)
+		} else {
+			shell.echo(`Cannot Found Used Ipv6 [${ipv6Address}] Inside TimeOut`)
+		}
 
 		release()
 	})
