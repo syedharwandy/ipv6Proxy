@@ -45,7 +45,7 @@ app.get('/startProxy', (req, res) => {
 		shell.echo(`Start IPV6 PROXY Using Port ${serverPort}`)
 		shell
 			.ShellString(
-				'nscache 65536\nnserver 8.8.8.8\nnserver 8.8.4.4\n\nconfig /conf/3proxy.cfg\nmonitor /conf/3proxy.cfg\n\ncounter /count/3proxy.3cf\nusers $/conf/passwd\n\ninclude /conf/counters\ninclude /conf/bandlimiters\n\nauth strong\nallow *\n\nproxy -n\n\n'
+				'nscache 65536\nnserver 1.1.1.1\n\nconfig /conf/3proxy.cfg\nmonitor /conf/3proxy.cfg\n\ncounter /count/3proxy.3cf\nusers $/conf/passwd\n\ninclude /conf/counters\ninclude /conf/bandlimiters\n\nauth strong\nallow *\n\nproxy -n\n\n'
 			)
 			.to('/usr/local/3proxy/conf/3proxy.cfg') //New Cfg File
 
