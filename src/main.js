@@ -27,7 +27,7 @@ function autoRemoveConnection(httpPort, socksPort, ipv6Address) {
 			shell.sed('-i', newRegexHttp, '', '/usr/local/3proxy/conf/3proxy.cfg')
 			shell.sed('-i', newRegexSocks, '', '/usr/local/3proxy/conf/3proxy.cfg')
 
-			shell.exec(`ip -6 addr del ${ipv6Address}/64 dev enp0s3`)
+			shell.exec(`ip -6 addr del ${ipv6Address}/64 dev ens32`)
 
 			httpQue.enqueue(httpPort)
 
@@ -99,7 +99,7 @@ app.post('/setIpv6proxy', (req, res) => {
 		shell.sed('-i', newRegexSocks, '', '/usr/local/3proxy/conf/3proxy.cfg')
 
 		// console.log(currentPort)
-		shell.exec(`ip -6 addr add ${ipv6Address}/64 dev enp0s3`)
+		shell.exec(`ip -6 addr add ${ipv6Address}/64 dev ens32`)
 		shell.ShellString(`proxy -p${httpPort} -a -n -6 -i0.0.0.0 -e${ipv6Address}\n`).toEnd('/usr/local/3proxy/conf/3proxy.cfg') //Http
 		shell.ShellString(`socks -p${socksPort} -a -n -6 -i0.0.0.0 -e${ipv6Address}\n`).toEnd('/usr/local/3proxy/conf/3proxy.cfg') //Socks
 
