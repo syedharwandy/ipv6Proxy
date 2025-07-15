@@ -8,7 +8,7 @@ const httpQue = new Queue()
 const app = express()
 const mutex = new Mutex()
 const serverPort = 4000
-const totalPortNeedToBuffer = 100
+const totalPortNeedToBuffer = 1000
 const username = 'syedharwandy'
 const password = 'Asyraf1994'
 
