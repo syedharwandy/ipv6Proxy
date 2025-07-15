@@ -16,27 +16,7 @@ const password = 'Asyraf1994'
 for (let x = 1; x <= totalPortNeedToBuffer; x++) {
 	httpQue.enqueue(10000 + x)
 }
-//Function To Remove Ipv6
-function autoRemoveConnection(httpPort, socksPort, ipv6Address) {
-	const timeOutID = setTimeout(() => {
-		mutex.acquire().then(function (release) {
-			shell.echo(`Remove Unused Port [H:${httpPort}|S:${socksPort}] For [${ipv6Address}]`)
-			//Remove Port From File
-			const newRegexHttp = new RegExp(`.*-p${httpPort}.*`, 'd') //Working
-			const newRegexSocks = new RegExp(`.*-p${socksPort}.*`, 'd') //Working
-			shell.sed('-i', newRegexHttp, '', '/usr/local/3proxy/conf/3proxy.cfg')
-			shell.sed('-i', newRegexSocks, '', '/usr/local/3proxy/conf/3proxy.cfg')
 
-			shell.exec(`ip -6 addr del ${ipv6Address}/64 dev ens32`)
-
-			httpQue.enqueue(httpPort)
-
-			release()
-		})
-	}, 10 * 60000)
-
-	setTimeoutID[ipv6Address] = { timeOutID: timeOutID, httpPort: httpPort, socksPort: socksPort }
-}
 //Used Express JSON
 app.use(express.json())
 //Start IPV6 Proxy
@@ -45,7 +25,7 @@ app.get('/startProxy', (req, res) => {
 		shell.echo(`Start IPV6 PROXY Using Port ${serverPort}`)
 		shell
 			.ShellString(
-				'nscache 65536\nnserver 2606:4700:4700::1111\nnserver 2606:4700:4700::1001\n# nserver 1.1.1.1\n# nserver 1.0.0.1\n\nconfig /conf/3proxy.cfg\nmonitor /conf/3proxy.cfg\n\ncounter /count/3proxy.3cf\nusers $/conf/passwd\n\ninclude /conf/counters\ninclude /conf/bandlimiters\n\nauth strong\nallow *\n\nproxy -n\n\n'
+				'nscache 65536\nnserver 1.1.1.1\nnserver 1.0.0.1\n\nconfig /conf/3proxy.cfg\nmonitor /conf/3proxy.cfg\n\ncounter /count/3proxy.3cf\nusers $/conf/passwd\n\ninclude /conf/counters\ninclude /conf/bandlimiters\n\nauth strong\nallow *\n\nproxy -n\n\n'
 			)
 			.to('/usr/local/3proxy/conf/3proxy.cfg') //New Cfg File
 
@@ -105,8 +85,6 @@ app.post('/setIpv6proxy', (req, res) => {
 
 		shell.exec(`ufw allow ${httpPort}`)
 		shell.exec(`ufw allow ${socksPort}`)
-
-		autoRemoveConnection(httpPort, socksPort, ipv6Address)
 
 		res.json({
 			'Local IP': localIp,
