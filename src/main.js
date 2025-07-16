@@ -3,12 +3,11 @@ import shell from 'shelljs'
 import Queue from './dataQueue.js'
 import { Mutex } from 'async-mutex'
 
-const setTimeoutID = {}
 const httpQue = new Queue()
 const app = express()
 const mutex = new Mutex()
 const serverPort = 4000
-const totalPortNeedToBuffer = 1000
+const totalPortNeedToBuffer = 2000
 const username = 'syedharwandy'
 const password = 'Asyraf1994'
 
@@ -25,7 +24,7 @@ app.get('/startProxy', (req, res) => {
 		shell.echo(`Start IPV6 PROXY Using Port ${serverPort}`)
 		shell
 			.ShellString(
-				'nscache 65536\nnserver 1.1.1.1\nnserver 1.0.0.1\n\nconfig /conf/3proxy.cfg\nmonitor /conf/3proxy.cfg\n\ncounter /count/3proxy.3cf\nusers $/conf/passwd\n\ninclude /conf/counters\ninclude /conf/bandlimiters\n\nauth strong\nallow *\n\nproxy -n\n\n'
+				'nscache 65536\nnserver 1.1.1.1\nnserver 1.0.0.1\n\nconfig /conf/3proxy.cfg\nmonitor /conf/3proxy.cfg\n\ncounter /count/3proxy.3cf\nusers $/conf/passwd\n\ninclude /conf/counters\ninclude /conf/bandlimiters\n\nauth strong\nallow *\n\n'
 			)
 			.to('/usr/local/3proxy/conf/3proxy.cfg') //New Cfg File
 
@@ -46,29 +45,6 @@ app.post('/setIpv6proxy', (req, res) => {
 		//Get Random Available Http Port
 		const httpPort = httpQue.dequeue()
 		const socksPort = httpPort + 10000
-
-		//Check TimeOut Have Been Set Or Not
-		if (setTimeoutID?.[ipv6Address]?.['timeOutID']) {
-			shell.echo(`Clear All Port And Ipv6 Timeout`)
-
-			clearTimeout(setTimeoutID[ipv6Address]['timeOutID'])
-			const data = setTimeoutID[ipv6Address]
-
-			const newRegexHttp = new RegExp(`.*-p${data['httpPort']}.*`, 'd') //Working
-			const newRegexSocks = new RegExp(`.*-p${data['socksPort']}.*`, 'd') //Working
-
-			shell.sed('-i', newRegexHttp, '', '/usr/local/3proxy/conf/3proxy.cfg')
-			shell.sed('-i', newRegexSocks, '', '/usr/local/3proxy/conf/3proxy.cfg')
-
-			if (data['httpPort'] !== httpPort) {
-				httpQue.enqueue(data['httpPort'])
-
-				shell.exec(`ufw deny ${data['httpPort']}`) // Disallow Port Used Http
-				shell.exec(`ufw deny ${data['socksPort']}`) // Disallow Port Used Sock
-			}
-
-			delete setTimeoutID[ipv6Address]
-		}
 
 		shell.echo(`Setup New Ipv6 Using Port [H:${httpPort}|S:${socksPort}] For [${ipv6Address}]`)
 
@@ -97,41 +73,5 @@ app.post('/setIpv6proxy', (req, res) => {
 		release()
 	})
 })
-//Remove Unused IPV6
-app.post('/removeIpv6proxy', (req, res) => {
-	mutex.acquire().then(function (release) {
-		const ipv6Address = req.body['Ipv6 Address']
-
-		//Check TimeOut Have Been Set Or Not
-		if (setTimeoutID?.[ipv6Address]?.['timeOutID']) {
-			shell.echo(`Clear All Port And Ipv6 Timeout`)
-
-			clearTimeout(setTimeoutID[ipv6Address]['timeOutID'])
-			const data = setTimeoutID[ipv6Address]
-
-			const newRegexHttp = new RegExp(`.*-p${data['httpPort']}.*`, 'd') //Working
-			const newRegexSocks = new RegExp(`.*-p${data['socksPort']}.*`, 'd') //Working
-			const newRegexRemoveEmpty = new RegExp(`.*^$.*`, 'd') //Not Sure
-
-			shell.sed('-i', newRegexHttp, '', '/usr/local/3proxy/conf/3proxy.cfg')
-			shell.sed('-i', newRegexSocks, '', '/usr/local/3proxy/conf/3proxy.cfg')
-			shell.sed('-i', newRegexRemoveEmpty, '', '/usr/local/3proxy/conf/3proxy.cfg') // Remove Empty Line
-
-			shell.exec(`ufw deny ${data['httpPort']}`) // Disallow Port Used Http
-			shell.exec(`ufw deny ${data['socksPort']}`) // Disallow Port Used Sock
-
-			httpQue.enqueue(data['httpPort'])
-			delete setTimeoutID[ipv6Address]
-
-			shell.echo(`Remove Used Ipv6 [${ipv6Address}] $ Total Que Port : ${httpQue.length()}`)
-			res.send('Ipv6 Proxy Remove')
-		} else {
-			shell.echo(`Cannot Found Used Ipv6 [${ipv6Address}] Inside TimeOut`)
-			res.send('[Fail] Try To Remove Ipv6 Proxy Fail')
-		}
-
-		release()
-	})
-})
-
 app.listen(serverPort)
+console.log('Starting my ipv6Proxy using port 4000')
