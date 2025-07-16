@@ -8,8 +8,8 @@ const app = express()
 const mutex = new Mutex()
 const serverPort = 4000
 const totalPortNeedToBuffer = 2000
-const username = 'syedharwandy'
-const password = 'Asyraf1994'
+const username = 'myipv6Proxy'
+const password = 'AAAA@1176@'
 
 //Create HttpPort
 for (let x = 1; x <= totalPortNeedToBuffer; x++) {
