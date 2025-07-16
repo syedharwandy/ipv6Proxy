@@ -21,7 +21,7 @@ app.use(express.json())
 //Start IPV6 Proxy
 app.get('/startProxy', (req, res) => {
 	mutex.acquire().then(function (release) {
-		shell.echo(`Start IPV6 PROXY Using Port ${serverPort}`)
+		shell.echo(`Creating IPV6 Proxy Starting ${serverPort}`)
 		shell
 			.ShellString(
 				'nscache 65536\nnserver 1.1.1.1\nnserver 1.0.0.1\n\nconfig /conf/3proxy.cfg\nmonitor /conf/3proxy.cfg\n\ncounter /count/3proxy.3cf\nusers $/conf/passwd\n\ninclude /conf/counters\ninclude /conf/bandlimiters\n\nauth strong\nallow *\n\n'
